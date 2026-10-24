@@ -1,0 +1,38 @@
+PASS FR01 单工作区独占锁
+PASS FR02 同名不同 ID
+PASS FR02 Unicode 标题和空标题限制
+PASS FR04 标签大小写去重
+PASS FR04 标签数量与长度
+PASS FR05 中文和英文子串检索
+PASS FR05 SQL 特殊字符按字面处理
+PASS FR03 保存与版本冲突
+PASS FR03 正文超限保留旧版
+PASS FR06 反向引用去重且忽略代码
+PASS FR06 重命名不破坏引用
+PASS FR07 删除和恢复保留稳定 ID
+PASS FR07 删除来源清除反向引用
+PASS FR08 导出链接转换不改代码
+PASS FR08 部分失败与编码校验
+PASS FR08 批内 note UUID 重映射
+PASS FR08 导入取消
+PASS FR09 禁止向工作区内部备份或导出
+PASS FR09 完整备份与逐字节恢复
+PASS FR09 恢复拒绝非空目标
+PASS FR09 校验拒绝额外文件
+PASS FR09 校验拒绝损坏正文且不触碰目标
+PASS FR09 路径穿越拒绝
+PASS FR11 索引重建结果一致
+PASS FR07 永久删除墓碑
+PASS FR05 分页与失效代次
+PASS FR11 重开与设置持久化
+PASS FR11 损坏 SQLite 自动重建
+PASS NFR04 进程异常退出 / dirty
+PASS NFR04 进程异常退出 / body
+PASS NFR04 进程异常退出 / record
+PASS EX10 元数据损坏隔离
+PASS EX06 未完成恢复不可打开
+PASS FR08 格式化链接与引用式链接迁移
+PASS NFR04 写入被锁时保留最后成功版本
+PASS NFR04 旧正文版本有界清理
+PASS FR09 备份取消不发布完整目录
+PASS EX10 正文校验失败阻止编辑

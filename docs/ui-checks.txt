@@ -1,0 +1,8 @@
+PASS 编辑与两秒自动保存
+PASS 双链索引
+PASS 界面搜索
+PASS 界面反向引用
+PASS 回收站只读
+PASS 恢复笔记
+PASS 主题设置
+PASS 危险语法安全渲染

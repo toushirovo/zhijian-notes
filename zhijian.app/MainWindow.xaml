@@ -1,0 +1,143 @@
+<Window x:Class="zhijian.app.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="知笺 · 让知识产生连接" Width="1440" Height="900" MinWidth="1100" MinHeight="700" WindowStartupLocation="CenterScreen"
+ Background="{DynamicResource CanvasBrush}" Foreground="{DynamicResource TextBrush}" FontFamily="Microsoft YaHei UI" FontSize="13"
+ Loaded="Window_Loaded" Closing="Window_Closing" PreviewKeyDown="Window_KeyDown">
+ <Window.Resources>
+  <SolidColorBrush x:Key="CanvasBrush" Color="#F5F6F8"/><SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="SideBrush" Color="#F0F3F3"/><SolidColorBrush x:Key="TextBrush" Color="#243330"/>
+  <SolidColorBrush x:Key="MutedBrush" Color="#6B7B77"/><SolidColorBrush x:Key="LineBrush" Color="#E1E7E4"/>
+  <SolidColorBrush x:Key="AccentBrush" Color="#236B57"/><SolidColorBrush x:Key="HoverBrush" Color="#E7F1EC"/>
+  <SolidColorBrush x:Key="AccentTextBrush" Color="#236B57"/>
+  <Style TargetType="Button">
+   <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/><Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/><Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,7,0"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.76"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Bd" Property="Opacity" Value="0.4"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/><Setter TargetName="Bd" Property="BorderThickness" Value="2"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="{DynamicResource AccentBrush}"/><Setter Property="Foreground" Value="White"/></Style>
+  <Style TargetType="TextBox">
+   <Setter Property="Background" Value="{DynamicResource PanelBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/><Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/><Setter Property="Padding" Value="10,8"/><Setter Property="SelectionBrush" Value="#719F8C"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style TargetType="ListBox"><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/><Setter Property="BorderThickness" Value="0"/><Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/></Style>
+  <Style TargetType="ListBoxItem">
+   <Setter Property="VerticalContentAlignment" Value="Top"/>
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="10"/><Setter Property="Margin" Value="0,2"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+    <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="7" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+    <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HoverBrush}"/><Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/><Setter TargetName="ItemBorder" Property="BorderThickness" Value="2,0,0,0"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </Window.Resources>
+ <Grid Background="{DynamicResource CanvasBrush}">
+  <Grid.RowDefinitions><RowDefinition Height="78"/><RowDefinition Height="*"/><RowDefinition Height="38"/></Grid.RowDefinitions>
+  <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="24,12">
+   <DockPanel>
+    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+     <Border Width="42" Height="42" Background="{DynamicResource AccentBrush}" CornerRadius="12"><TextBlock Text="笺" Foreground="White" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+     <StackPanel Margin="12,0,24,0"><TextBlock Text="知笺" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="让知识产生连接" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></StackPanel>
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+     <Button Content="新建工作区" Click="CreateWorkspace_Click"/><Button Content="打开工作区" Click="OpenWorkspace_Click"/>
+     <Button x:Name="ThemeButton" Content="◐  深色" Click="Theme_Click"/><Button Content="帮助 F1" Click="Help_Click" Margin="0"/>
+    </StackPanel>
+    <StackPanel VerticalAlignment="Center" Margin="6,0,12,0"><TextBlock x:Name="WorkspaceName" Text="你的个人知识空间" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="WorkspacePath" Text="本地优先 · 无需登录 · 离线可用" FontSize="11" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"/></StackPanel>
+   </DockPanel>
+  </Border>
+  <Grid Grid.Row="1">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="270"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Border Background="{DynamicResource SideBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="16,24,14,16">
+    <DockPanel>
+     <StackPanel DockPanel.Dock="Bottom">
+      <TextBlock Text="数据与迁移" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="7,14,0,10"/>
+      <Button Content="导入 Markdown" Click="Import_Click" Margin="0,0,0,7"/><Button Content="导出全部笔记" Click="ExportAll_Click" Margin="0,0,0,7"/>
+      <Button Content="完整备份" Click="Backup_Click" Margin="0,0,0,7"/><Button Content="从备份恢复" Click="RestoreBackup_Click" Margin="0,0,0,7"/>
+      <Button Content="重建检索索引" Click="Rebuild_Click" Margin="0,0,0,10"/>
+      <TextBlock Text="所有笔记保存在本机" Foreground="{DynamicResource MutedBrush}" FontSize="10" HorizontalAlignment="Center"/>
+     </StackPanel>
+     <StackPanel DockPanel.Dock="Top">
+      <Button x:Name="NewButton" Content="＋  新建笔记" Style="{StaticResource PrimaryButton}" Click="New_Click" Margin="0,0,0,24"/>
+      <Button x:Name="AllButton" Content="全部笔记" Click="All_Click" Margin="0,0,0,7"/><Button x:Name="TrashButton" Content="回收站" Click="Trash_Click" Margin="0,0,0,20"/>
+      <DockPanel Margin="5,0,0,6"><Button Content="清除" Click="ClearTags_Click" Padding="5,2" FontSize="10" DockPanel.Dock="Right"/><TextBlock Text="标签 · 多选交集" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center"/></DockPanel>
+     </StackPanel>
+     <ListBox x:Name="TagList" ItemContainerStyle="{StaticResource {x:Type ListBoxItem}}" SelectionMode="Multiple" SelectionChanged="Tags_SelectionChanged"/>
+    </DockPanel>
+   </Border>
+   <Border Grid.Column="1" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="16,24,16,12">
+    <DockPanel>
+     <StackPanel DockPanel.Dock="Top">
+      <TextBlock x:Name="ListHeading" Text="全部笔记" FontSize="19" FontWeight="SemiBold" Margin="2,0,0,14"/>
+      <TextBox x:Name="SearchBox" ToolTip="搜索标题和正文，Ctrl+K" AutomationProperties.Name="搜索笔记" TextChanged="Search_Changed"/>
+      <TextBlock x:Name="SearchHint" Text="搜索标题与正文  ·  Ctrl+K" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,6,0,14"/>
+     </StackPanel>
+     <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <Button x:Name="MoreButton" Content="加载更多" Click="More_Click" Visibility="Collapsed" Margin="0,0,0,5"/>
+      <Button x:Name="EmptyTrashButton" Content="清空回收站…" Click="EmptyTrash_Click" Visibility="Collapsed" Margin="0,0,0,5"/>
+      <TextBlock x:Name="ResultCount" Text="还没有笔记" FontSize="11" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center"/>
+     </StackPanel>
+     <ListBox x:Name="NoteList" ItemContainerStyle="{StaticResource {x:Type ListBoxItem}}" SelectionChanged="Note_SelectionChanged">
+      <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,4">
+       <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+       <TextBlock Text="{Binding Snippet}" TextWrapping="Wrap" MaxHeight="38" FontSize="11" Foreground="{DynamicResource MutedBrush}">
+        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Margin" Value="0,7,0,0"/><Style.Triggers><DataTrigger Binding="{Binding Snippet}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+       </TextBlock>
+       <TextBlock Text="{Binding TagText}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" Margin="0,8,0,8" TextTrimming="CharacterEllipsis"/>
+       <DockPanel><TextBlock Text="{Binding ShortId}" FontSize="10" Foreground="{DynamicResource MutedBrush}" DockPanel.Dock="Right"/><TextBlock Text="{Binding DisplayTime}" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></DockPanel>
+      </StackPanel></DataTemplate></ListBox.ItemTemplate>
+     </ListBox>
+    </DockPanel>
+   </Border>
+   <Grid Grid.Column="2" Margin="24,24,24,16">
+    <Grid x:Name="EditorPanel" Visibility="Collapsed">
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="110"/></Grid.RowDefinitions>
+     <TextBlock x:Name="NoteMeta" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,13"/>
+     <TextBox x:Name="TitleBox" Grid.Row="1" FontSize="26" FontWeight="SemiBold" Padding="0,4" Background="Transparent" BorderThickness="0" TextChanged="Editor_Changed" AutomationProperties.Name="笔记标题"/>
+     <StackPanel Grid.Row="2" Margin="0,14,0,16">
+      <DockPanel Margin="0,0,0,14"><TextBlock Text="标签" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,0,12,0"/><TextBox x:Name="TagsBox" TextChanged="Editor_Changed" ToolTip="使用英文逗号或中文逗号分隔标签" AutomationProperties.Name="笔记标签" Padding="8,5"/></DockPanel>
+      <WrapPanel><Button x:Name="SaveButton" Content="保存" Click="Save_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="LinkButton" Content="插入双链" Click="Link_Click"/><Button Content="导出本篇" Click="ExportOne_Click"/><Button Content="另存正文" Click="SaveAs_Click"/>
+       <Button x:Name="DeleteButton" Content="移入回收站" Click="Delete_Click"/><Button x:Name="RestoreButton" Content="恢复笔记" Click="RestoreNote_Click" Visibility="Collapsed"/><Button x:Name="PurgeButton" Content="永久删除…" Click="Purge_Click" Visibility="Collapsed"/>
+      </WrapPanel>
+     </StackPanel>
+     <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>
+      <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
+       <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="MARKDOWN  /  编辑" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
+       <TextBox x:Name="BodyBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Top" BorderThickness="0" FontFamily="Cascadia Code, Consolas, Microsoft YaHei UI" FontSize="14" Padding="16" TextChanged="Editor_Changed" AutomationProperties.Name="Markdown 正文"/>
+      </DockPanel></Border>
+      <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="Transparent"/>
+      <Border Grid.Column="2" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
+       <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="PREVIEW  /  安全预览" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
+       <FlowDocumentScrollViewer x:Name="Preview" IsToolBarVisible="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"/>
+      </DockPanel></Border>
+     </Grid>
+     <Border Grid.Row="4" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,0" Padding="0,12,0,0"><DockPanel>
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal"><TextBlock Text="反向引用" FontWeight="SemiBold"/><TextBlock x:Name="BacklinkCount" Text="   暂无其他笔记引用此篇" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center"/></StackPanel>
+      <ListBox x:Name="Backlinks" ItemContainerStyle="{StaticResource {x:Type ListBoxItem}}" Margin="0,6,0,0" MouseDoubleClick="Backlink_Click" DisplayMemberPath="Title" ToolTip="双击打开引用来源"/>
+     </DockPanel></Border>
+    </Grid>
+    <StackPanel x:Name="EmptyPanel" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="430">
+     <TextBlock Text="一张笺，连接每一个想法。" FontSize="27" FontWeight="SemiBold" TextAlignment="Center"/>
+     <TextBlock Text="把课堂笔记、阅读摘录和灵感留在本地。&#10;用标签整理，用双链串联，让知识慢慢生长。" FontSize="14" LineHeight="26" TextAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,20,0,25"/>
+     <Button Content="创建你的第一篇笔记" Click="New_Click" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Center" Padding="22,12"/>
+     <TextBlock Text="支持 Markdown · 自动保存 · 完整备份" TextAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,20,0,0"/>
+    </StackPanel>
+   </Grid>
+  </Grid>
+  <Border Grid.Row="2" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="20,7"><DockPanel>
+   <TextBlock x:Name="IndexStatus" Text="未打开工作区" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
+   <TextBlock x:Name="WordCount" DockPanel.Dock="Right" Margin="0,0,24,0" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
+   <TextBlock x:Name="SaveStatus" Text="准备就绪" FontSize="11" TextTrimming="CharacterEllipsis"/>
+  </DockPanel></Border>
+  <Border x:Name="BusyPanel" Grid.RowSpan="3" Background="#880F201B" Visibility="Collapsed"><Border Background="{DynamicResource PanelBrush}" CornerRadius="12" Width="420" Padding="30" VerticalAlignment="Center" HorizontalAlignment="Center"><StackPanel>
+   <TextBlock x:Name="BusyText" Text="正在处理…" FontSize="18" TextWrapping="Wrap"/><ProgressBar Height="4" IsIndeterminate="True" Margin="0,20" Foreground="{DynamicResource AccentBrush}"/>
+   <TextBlock Text="请保留当前窗口，完成后会显示结果。" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,15"/><Button Content="取消任务" Click="Cancel_Click" HorizontalAlignment="Right"/>
+  </StackPanel></Border></Border>
+ </Grid>
+</Window>
