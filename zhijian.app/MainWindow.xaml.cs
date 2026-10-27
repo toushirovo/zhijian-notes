@@ -41,6 +41,12 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         var args = Environment.GetCommandLineArgs();
+        if (args.Length >= 3 && args[1] == "--dialog-check")
+        {
+            try { CheckDialogs(args[2]); }
+            catch (Exception ex) { Directory.CreateDirectory(args[2]); File.WriteAllText(Path.Combine(args[2], "dialog-error.txt"), ex.ToString()); }
+            closing = true; Close(); return;
+        }
         if (args.Length >= 3 && args[1] == "--close-check")
         {
             smokeOutput = args[2]; Directory.CreateDirectory(smokeOutput);
@@ -78,13 +84,13 @@ public partial class MainWindow : Window
     private bool NeedWorkspace()
     {
         if (workspace != null) return true;
-        MessageBox.Show(this, "请先点击右上角“新建工作区”，选择空文件夹；已有笔记可选择“打开工作区”。", "开始使用知笺"); return false;
+        Dialogs.Text(this, "开始使用知笺", "请先点击右上角“新建工作区”，选择空文件夹；已有笔记可选择“打开工作区”。"); return false;
     }
     private void Error(string operation, Exception ex)
     {
         SaveStatus.Text = $"{operation}失败：{ex.Message}";
         if (smokeOutput != null) throw new InvalidOperationException(operation, ex);
-        MessageBox.Show(this, $"{operation}失败：\n{ex.Message}\n\n当前编辑不会被自动丢弃。请检查路径、权限或磁盘空间后重试，也可另存正文。", "知笺", MessageBoxButton.OK, MessageBoxImage.Warning);
+        Dialogs.Text(this, operation + "未完成", $"{ex.Message}\n\n当前编辑不会被自动丢弃。请检查路径、权限或磁盘空间后重试，也可另存正文。");
     }
     private async Task<bool> RunJob(string label, Func<CancellationToken, IProgress<string>, Task> action)
     {

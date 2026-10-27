@@ -11,7 +11,7 @@ public partial class MainWindow
     private async Task PurgeNotes(NoteRecord[] notes)
     {
         if (notes.Length == 0) return;
-        if (MessageBox.Show(this, $"确定永久删除 {notes.Length} 篇笔记？\n\n此操作无法撤回。已有备份仍可能包含这些内容。", "永久删除确认", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+        if (!Dialogs.Confirm(this, $"永久删除 {notes.Length} 篇笔记？", "删除后，这些笔记将无法从回收站恢复。", "已有备份仍可能包含这些内容。\n\n" + string.Join("\n", notes.Take(8).Select(n => "• " + n.Title)) + (notes.Length > 8 ? $"\n以及其他 {notes.Length - 8} 篇笔记" : ""), "永久删除", true)) return;
         var report = new BatchReport("永久删除", []);
         await RunJob("正在清理回收站…", async (ct, p) => await Task.Run(() =>
         {
@@ -23,7 +23,7 @@ public partial class MainWindow
                 p.Report($"已处理 {report.Items.Count}/{notes.Length}");
             }
         }));
-        ClearEditor(); await RefreshList(); Dialogs.Text(this, "清理结果", report.ToString());
+        ClearEditor(); await RefreshList(); Dialogs.Report(this, report);
     }
     private async void Import_Click(object sender, RoutedEventArgs e)
     {
@@ -34,7 +34,7 @@ public partial class MainWindow
         {
             trash = false; await RefreshTags(); await RefreshList();
             var id = report!.Items.FirstOrDefault(i => i.Status == "SUCCESS")?.NoteId; if (id != null) await OpenNote(id);
-            Dialogs.Text(this, "导入报告", report.ToString());
+            Dialogs.Report(this, report);
         }
     }
     private async void ExportAll_Click(object sender, RoutedEventArgs e) => await ExportNotes(false);
@@ -44,7 +44,7 @@ public partial class MainWindow
         if (!NeedWorkspace() || (one && current == null) || !await SaveCurrent(true)) return;
         var path = PickFolder("选择导出位置（工作区之外）"); if (path == null) return; var ids = one ? new[] { current!.Id } : null;
         BatchReport? report = null;
-        if (await RunJob("正在导出笔记…", async (ct, p) => report = await Task.Run(() => workspace!.Export(path, ids, p, ct)))) Dialogs.Text(this, "导出完成", report + "\n\n输出目录：" + report!.OutputPath);
+        if (await RunJob("正在导出笔记…", async (ct, p) => report = await Task.Run(() => workspace!.Export(path, ids, p, ct)))) Dialogs.Report(this, report!);
     }
     private bool SaveAs()
     {
@@ -71,7 +71,7 @@ public partial class MainWindow
         if (!await SaveCurrent(true)) return;
         var source = PickFolder("选择备份包（含 manifest.json 的文件夹）"); if (source == null) return;
         var target = PickFolder("选择新的空文件夹作为恢复目标"); if (target == null) return;
-        if (workspace != null && Disk.Inside(Disk.Root(target), workspace.Path)) { MessageBox.Show(this, "恢复目录不能放在当前工作区内。"); return; }
+        if (workspace != null && Disk.Inside(Disk.Root(target), workspace.Path)) { Dialogs.Text(this, "请选择独立的恢复目录", "恢复目录不能放在当前工作区内。请在工作区之外新建一个空文件夹。"); return; }
         if (await RunJob("正在校验并恢复备份…", async (ct, p) => await Task.Run(() => Workspace.RestoreBackup(source, target, p, ct))))
         { await SwitchWorkspace(target, false); SaveStatus.Text = "已恢复到新的工作区，原工作区未改动。"; }
     }

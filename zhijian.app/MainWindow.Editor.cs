@@ -104,10 +104,10 @@ public partial class MainWindow
         var id = MarkdownLinks.Target(url);
         if (id != null)
         {
-            if (workspace?.All().Any(n => n.Id == id) != true) { MessageBox.Show(this, "链接目标已删除或不在当前工作区。可从回收站恢复，或重新插入链接。", "失效链接"); return; }
+            if (workspace?.All().Any(n => n.Id == id) != true) { Dialogs.Text(this, "暂时无法打开链接", "链接目标已删除或不在当前工作区。可从回收站恢复，或重新插入链接。"); return; }
             await OpenNote(id); return;
         }
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" && MessageBox.Show(this, $"将在默认浏览器打开：\n{uri.Host}\n\n{url}", "打开外部链接", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" && Dialogs.Confirm(this, "打开外部网页？", "确认后将使用默认浏览器访问此地址。", $"{uri.Host}\n\n{url}", "打开网页"))
             try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch (Exception ex) { Error("打开网页", ex); }
     }
     private void Link_Click(object sender, RoutedEventArgs e)

@@ -48,7 +48,7 @@ public partial class MainWindow
         V1 范围
         Windows 11 x64，纯文字 Markdown；不含同步、移动端、多人协作、插件市场、PDF/Word 导出。
         """;
-    private void Help_Click(object sender, RoutedEventArgs e) => Dialogs.Text(this, "知笺 · 使用帮助", HelpText);
+    private void Help_Click(object sender, RoutedEventArgs e) => Dialogs.Help(this, HelpText);
     private async void Window_KeyDown(object sender, KeyEventArgs e)
     {
         if (busy) return;
@@ -73,7 +73,7 @@ public partial class MainWindow
     {
         try
         {
-        if (busy) { MessageBox.Show(this, "请等待当前任务完成，或取消任务后关闭窗口。"); return; }
+        if (busy) { Dialogs.Text(this, "任务仍在进行", "请等待当前任务完成，或取消任务后关闭窗口。"); return; }
         if (dirty)
         {
             saveTimer.Stop(); var choice = Dialogs.ClosingChoice(this);
