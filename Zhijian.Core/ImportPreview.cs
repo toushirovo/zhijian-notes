@@ -1,3 +1,5 @@
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 namespace Zhijian.Core;
 
 public sealed record ImportPreviewItem(string Path, bool CanImport, int MappedLinks, string[] Warnings, string? Error);
@@ -41,6 +43,21 @@ public static class ImportPreview
                 }
                 catch (ArgumentException) { }
                 warnings.Add($"缺少同批目标：{url}。继续导入会转为普通文字；请返回并同时选中目标文件。");
+            }
+            foreach (var image in MarkdownLinks.Parse(valid[path]).Descendants<LinkInline>().Where(l => l.IsImage))
+            {
+                var url = image.Url ?? "";
+                try
+                {
+                    if (Uri.TryCreate(url, UriKind.Absolute, out _)) throw new InvalidDataException("远程或绝对路径图片不会加载");
+                    var relative = Uri.UnescapeDataString(url).Replace('\\', '/');
+                    while (relative.StartsWith("./", StringComparison.Ordinal)) relative = relative[2..];
+                    var file = Disk.SafeFile(Path.GetDirectoryName(path)!, relative);
+                    if (new FileInfo(file).Length > NoteMedia.MaxImageBytes) throw new InvalidDataException("超过10 MiB");
+                    NoteMedia.ImageExtension(File.ReadAllBytes(file));
+                }
+                catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+                { warnings.Add("图片需留意：" + url + "（" + ex.Message + "）"); }
             }
             return new ImportPreviewItem(path, true, mapped, warnings.Distinct().ToArray(), null);
         }).ToArray();

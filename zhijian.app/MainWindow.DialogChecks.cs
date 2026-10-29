@@ -12,7 +12,7 @@ public partial class MainWindow
     {
         Directory.CreateDirectory(output);
         var checks = new List<string>();
-        void Inspect(string name, Action show, string button)
+        void Inspect(string name, Action show, string button, Action<Window>? prepare = null)
         {
             Exception? failure = null;
             var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
@@ -23,6 +23,7 @@ public partial class MainWindow
                 timer.Stop();
                 try
                 {
+                    prepare?.Invoke(dialog);
                     dialog.UpdateLayout();
                     var bitmap = new RenderTargetBitmap((int)dialog.ActualWidth, (int)dialog.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(dialog); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -61,6 +62,17 @@ public partial class MainWindow
         bool importAccepted = false;
         Inspect("import-preview", () => importAccepted = Dialogs.PreviewImport(this, [new("导入甲.md", true, 0, ["缺少同批目标：导入乙.md。请返回并同时选择目标文件。"], null)]), "返回选文件");
         if (importAccepted) throw new Exception("返回选文件未取消导入");
+        string? chosenColor = null;
+        Inspect("color-picker", () => chosenColor = Dialogs.PickColor(this, "#3B82F6"), "应用颜色", dialog =>
+        {
+            IEnumerable<DependencyObject> Walk(DependencyObject root)
+            { yield return root; for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) foreach (var child in Walk(VisualTreeHelper.GetChild(root, i))) yield return child; }
+            var elements = Walk(dialog).ToArray(); var hex = elements.OfType<TextBox>().Single(x => x.Name == "ColorHex");
+            var apply = elements.OfType<Button>().Single(x => Equals(x.Content, "应用颜色"));
+            hex.Text = "#BAD"; if (apply.IsEnabled) throw new Exception("无效颜色未禁用应用按钮");
+            hex.Text = "#E06C75"; if (!apply.IsEnabled) throw new Exception("有效颜色未启用应用按钮");
+        });
+        if (chosenColor != "#E06C75") throw new Exception("颜色选择返回错误");
         CheckRestoreWizard(output, checks);
         File.WriteAllLines(Path.Combine(output, "dialog-checks.txt"), checks);
     }

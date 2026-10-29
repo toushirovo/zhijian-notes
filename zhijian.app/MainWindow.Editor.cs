@@ -29,7 +29,7 @@ public partial class MainWindow
             var content = await Task.Run(() => workspace.Get(id));
             loading = true; current = content.Record; TitleBox.Text = current.Title; TagsBox.Text = string.Join(", ", current.Tags!); BodyBox.Text = content.Body;
             bool readOnly = current.State != "ACTIVE"; TitleBox.IsReadOnly = TagsBox.IsReadOnly = BodyBox.IsReadOnly = readOnly;
-            SaveButton.IsEnabled = LinkButton.IsEnabled = FormatToolbar.IsEnabled = !readOnly; DeleteButton.Visibility = readOnly ? Visibility.Collapsed : Visibility.Visible;
+            SaveButton.IsEnabled = LinkButton.IsEnabled = FormatToolbar.IsEnabled = MediaToolbar.IsEnabled = !readOnly; DeleteButton.Visibility = readOnly ? Visibility.Collapsed : Visibility.Visible;
             RestoreButton.Visibility = PurgeButton.Visibility = readOnly ? Visibility.Visible : Visibility.Collapsed;
             NoteMeta.Text = $"{(readOnly ? "回收站 · 只读" : "笔记")}  /  {current.ShortId}   ·   更新于 {current.UpdatedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
             NoteList.SelectedItem = visibleNotes.FirstOrDefault(n => n.Id == id); dirty = false; loading = false;
@@ -89,7 +89,7 @@ public partial class MainWindow
     private void RenderPreview()
     {
         if (current == null) return;
-        Preview.Document = SafePreview.Render(BodyBox.Text, (Brush)FindResource("TextBrush"), (Brush)FindResource("AccentTextBrush"), Navigate);
+        Preview.Document = SafePreview.Render(BodyBox.Text, (Brush)FindResource("TextBrush"), (Brush)FindResource("AccentTextBrush"), Navigate, workspace == null ? null : workspace.ReadImage);
         WordCount.Text = $"{Rules.Length(BodyBox.Text):N0} 字符";
     }
     private async Task RefreshBacklinks()

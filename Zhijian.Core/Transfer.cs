@@ -55,6 +55,7 @@ public sealed partial class Workspace
                         catch (ArgumentException) { }
                         warnings.Add("未匹配的相对链接已转为普通文本"); return "";
                     });
+                    body = ImportImages(body, p.Path, warnings);
                     Create(p.Title, body, id: p.Id);
                     report.Items.Add(new(p.Path, "SUCCESS", p.Id, string.Join("；", warnings.Distinct())));
                 }
@@ -99,6 +100,7 @@ public sealed partial class Workspace
                         if (exported.Contains(target)) return "./" + target + ".md";
                         outside = true; return null;
                     });
+                    ExportImages(body, output);
                     Disk.Atomic(System.IO.Path.Combine(output, n.Id + ".md"), Rules.Utf8.GetBytes(body));
                     report.Items.Add(new(n.Title!, "SUCCESS", n.Id, outside ? "含本次导出范围之外的 note 链接" : null));
                 }
@@ -118,6 +120,7 @@ public sealed partial class Workspace
             var notes = records.Values.Where(n => n.State != "PURGED").ToArray();
             var paths = new List<string> { "workspace.json", "settings.json" };
             foreach (var n in notes) { ReadBody(n); paths.Add($"records/{n.Id}.json"); paths.Add($"bodies/{n.Id}/{n.BodyRev}.md"); }
+            foreach (var url in notes.SelectMany(n => NoteMedia.Assets(ReadBody(n))).Distinct()) { NoteMedia.ReadAsset(Path, url); paths.Add(url); }
             var files = new List<BackupFile>(); int count = 0;
             foreach (var relative in paths)
             {
@@ -125,7 +128,7 @@ public sealed partial class Workspace
                 Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dest)!); var bytes = File.ReadAllBytes(source); Disk.Durable(dest, bytes);
                 files.Add(new(relative, bytes.LongLength, Disk.Hash(bytes))); progress?.Report($"正在备份：{++count}/{paths.Count}");
             }
-            var manifest = new BackupManifest(1, Info.WorkspaceId, DateTimeOffset.UtcNow, notes.Count(n => n.State == "ACTIVE"), notes.Count(n => n.State == "TRASH"), files);
+            var manifest = new BackupManifest(paths.Any(NoteMedia.IsAsset) ? 2 : 1, Info.WorkspaceId, DateTimeOffset.UtcNow, notes.Count(n => n.State == "ACTIVE"), notes.Count(n => n.State == "TRASH"), files);
             Disk.Durable(System.IO.Path.Combine(partial, "manifest.json"), Disk.Serialize(manifest));
             ValidateBackup(partial, cancel); Directory.Move(partial, output); return output;
         }
@@ -135,13 +138,13 @@ public sealed partial class Workspace
         folder = Disk.Root(folder); var manifestPath = Disk.SafeFile(folder, "manifest.json");
         if (new FileInfo(manifestPath).Length > 16 * 1024 * 1024) throw new InvalidDataException("备份清单过大。");
         var manifest = Disk.Read<BackupManifest>(manifestPath);
-        if (manifest.FormatVersion != 1 || !Rules.IsId(manifest.SourceWorkspaceId) || manifest.Files == null || manifest.Files.Count > 100002)
+        if (manifest.FormatVersion is not (1 or 2) || !Rules.IsId(manifest.SourceWorkspaceId) || manifest.Files == null || manifest.Files.Count > 100002)
             throw new InvalidDataException("备份版本或清单不合法。");
         var listed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var f in manifest.Files)
         {
             cancel.ThrowIfCancellationRequested(); var path = Disk.SafeFile(folder, f.Path);
-            if (f.Path == "manifest.json" || !listed.Add(f.Path) || f.Bytes < 0 || f.Bytes > 2 * 1024 * 1024 ||
+            if (f.Path == "manifest.json" || !listed.Add(f.Path) || f.Bytes < 0 || f.Bytes > (NoteMedia.IsAsset(f.Path) ? NoteMedia.MaxImageBytes : 2 * 1024 * 1024) ||
                 new FileInfo(path).Length != f.Bytes || Disk.Hash(File.ReadAllBytes(path)) != f.Sha256) throw new InvalidDataException($"备份校验失败：{f.Path}。原工作区未改动。");
         }
         // Enumerate without following any reparse points, including unused directories.
@@ -170,6 +173,11 @@ public sealed partial class Workspace
             if (!listed.Contains(body)) throw new InvalidDataException("备份缺少引用的正文。");
             var bytes = File.ReadAllBytes(Disk.SafeFile(folder, body)); Rules.Utf8.GetString(bytes);
             if (bytes.Length != n.BodyBytes || Disk.Hash(bytes) != n.BodySha256) throw new InvalidDataException("正文与元数据校验不一致。");
+            foreach (var url in NoteMedia.Assets(Rules.Utf8.GetString(bytes)))
+            {
+                if (manifest.FormatVersion != 2 || !listed.Contains(url)) throw new InvalidDataException("备份缺少图片附件或版本不匹配。");
+                NoteMedia.ReadAsset(folder, url); expected.Add(url);
+            }
             if (n.State == "ACTIVE") active++; else trash++;
         }
         if (!expected.SetEquals(listed) || active != manifest.NoteCount || trash != manifest.TrashCount) throw new InvalidDataException("备份笔记数量或引用清单不一致。");

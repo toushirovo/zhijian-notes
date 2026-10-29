@@ -167,5 +167,38 @@ Test("FR08 导入预检UUID映射且不修改源文件", () =>
     var body = $"[链接](note:{id})"; File.WriteAllText(a, body); File.WriteAllText(b, "目标");
     Check(ImportPreview.Analyze([a, b])[0].MappedLinks == 1); Check(File.ReadAllText(a) == body);
 });
+Test("FR12 图片附件去重导出导入与备份恢复", () =>
+{
+    var bytes = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=");
+    using var ws = new Workspace(Folder("images-workspace"), true);
+    var url = ws.AddImage(bytes); Check(url == ws.AddImage(bytes)); Check(ws.ReadImage(url).SequenceEqual(bytes));
+    var body = $"<span style=\"color:#3B82F6\">彩色正文</span>\n\n![图片]({url})";
+    var note = ws.Create("图片正文", body); var trash = ws.Create("回收站图片", body); ws.SetTrash(trash.Id, trash.Revision, true);
+    var report = ws.Export(Folder("image-exports")); Check(report.SuccessCount == 1); Check(File.Exists(Path.Combine(report.OutputPath!, url)));
+    using var imported = new Workspace(Folder("images-imported"), true);
+    var import = imported.Import([Path.Combine(report.OutputPath!, note.Id + ".md")]); Check(import.SuccessCount == 1); Check(imported.ReadImage(url).SequenceEqual(bytes));
+    Check(imported.Get(import.Items[0].NoteId!).Body == body);
+    var backup = ws.Backup(Folder("image-backups")); Check(Workspace.ValidateBackup(backup).FormatVersion == 2);
+    var target = Folder("image-restored"); Workspace.RestoreBackup(backup, target);
+    using var restored = new Workspace(target); Check(restored.ReadImage(url).SequenceEqual(bytes)); Check(restored.Get(note.Id).Body == body && restored.TrashCount == 1);
+    File.WriteAllBytes(Path.Combine(backup, url), [1, 2, 3]); Throws(() => Workspace.ValidateBackup(backup));
+});
+Test("FR12 图片路径限制与缺失提示", () =>
+{
+    using var ws = new Workspace(Folder("images-safety"), true);
+    Throws(() => ws.AddImage([1, 2, 3])); Throws(() => ws.AddImage(new byte[NoteMedia.MaxImageBytes + 1]));
+    Throws(() => ws.ReadImage("../outside.png")); Throws(() => ws.ReadImage("https://example.com/image.png"));
+    var dir = Folder("missing-images"); var md = Path.Combine(dir, "images.md"); File.WriteAllText(md, "![missing](missing.png)\n![remote](https://example.com/a.png)\n![escape](../private.png)");
+    Check(ImportPreview.Analyze([md])[0].Warnings.Length == 3);
+    var report = ws.Import([md]); Check(report.SuccessCount == 1 && report.Items[0].Message!.Contains("图片未导入"));
+    var missing = "assets/" + new string('a', 64) + ".png"; ws.Create("缺失附件", $"![图片]({missing})");
+    Throws(() => ws.Backup(Folder("missing-image-backup"))); Check(ws.Export(Folder("missing-image-export")).FailedCount == 1);
+});
+Test("FR12 图片识别不处理代码块", () =>
+{
+    var url = "assets/" + new string('b', 64) + ".png";
+    var body = $"```\n![代码]({url})\n```\n\n`![行内]({url})`"; Check(NoteMedia.Assets(body).Length == 0);
+    Check(MarkdownLinks.Rewrite(body, _ => "assets/new.png", images: true) == body);
+});
 File.WriteAllLines(Path.Combine(root, "checks.txt"), results); Console.WriteLine($"\n{results.Count - failed}/{results.Count} passed. Output: {root}");
 Environment.ExitCode = failed == 0 ? 0 : 1;

@@ -115,10 +115,17 @@
        <Button Content="代码" Tag="code" Click="Format_Click" Padding="8,5" Focusable="False"/>
        <Button Content="网页链接" Tag="link" Click="Format_Click" Padding="8,5" Focusable="False"/>
       </WrapPanel>
-      <WrapPanel x:Name="LayoutButtons" Margin="0,10,0,0">
+      <WrapPanel Margin="0,8,0,0">
+      <WrapPanel x:Name="MediaToolbar" Margin="0,0,12,0">
+       <Button x:Name="ColorButton" Content="A · 文字颜色" Click="Color_Click" Padding="10,5" ToolTip="预设色、自定义RGB与恢复默认颜色"/>
+       <Button Content="＋ 插入图片" Click="Image_Click" Padding="10,5" ToolTip="复制PNG或JPEG到工作区，随笔记备份"/>
+       <Button Content="粘贴图片" Click="PasteImage_Click" Padding="10,5" ToolTip="从剪贴板插入截图"/>
+      </WrapPanel>
+      <WrapPanel x:Name="LayoutButtons" Margin="0,0,0,0">
        <Button Content="仅编辑" Tag="edit" Click="Layout_Click" Padding="10,5"/>
        <Button Content="分屏" Tag="split" Click="Layout_Click" Padding="10,5" Style="{StaticResource PrimaryButton}"/>
        <Button Content="仅预览" Tag="preview" Click="Layout_Click" Padding="10,5"/>
+      </WrapPanel>
       </WrapPanel>
      </StackPanel>
      <Grid x:Name="EditorColumns" Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>

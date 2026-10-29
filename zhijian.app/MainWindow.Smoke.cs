@@ -49,8 +49,9 @@ public partial class MainWindow
         SetEditorLayout("preview"); Check(EditorSurface.Visibility == Visibility.Collapsed && PreviewSurface.Visibility == Visibility.Visible, "仅预览布局");
         SetEditorLayout("split"); Check(EditorSurface.Visibility == Visibility.Visible && EditorDivider.Visibility == Visibility.Visible, "分屏布局恢复");
         await ChangeTrash(true); await SetView(true); var readOnlyBody = BodyBox.Text; InsertMarkdown("bold");
-        Check(BodyBox.Text == readOnlyBody && !FormatToolbar.IsEnabled, "回收站禁止工具栏修改");
+        Check(BodyBox.Text == readOnlyBody && !FormatToolbar.IsEnabled && !MediaToolbar.IsEnabled, "回收站禁止工具栏修改");
         await ChangeTrash(false); await SetView(false); await OpenNote(first.Id);
+        await CheckMedia(output, Check);
         RenderPreview(); await Capture(Path.Combine(output, "light.png"));
         await Task.Run(() => workspace.SetTheme("dark")); ApplyTheme(true); await Capture(Path.Combine(output, "dark.png"));
         Check(workspace.Settings.Theme == "dark", "主题设置");

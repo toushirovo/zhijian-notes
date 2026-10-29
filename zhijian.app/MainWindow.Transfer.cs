@@ -61,6 +61,7 @@ public partial class MainWindow
         try
         {
             if (workspace != null && Disk.Inside(Path.GetFullPath(dialog.FileName), workspace.Path)) throw new IOException("请选择工作区外的目录，避免改动应用管理的文件。");
+            workspace?.ExportImages(BodyBox.Text, Path.GetDirectoryName(Path.GetFullPath(dialog.FileName))!);
             Disk.Atomic(dialog.FileName, Rules.Utf8.GetBytes(BodyBox.Text)); SaveStatus.Text = "当前正文已另存；工作区中的保存状态不变。"; return true;
         }
         catch (Exception ex) { Error("另存正文", ex); return false; }
