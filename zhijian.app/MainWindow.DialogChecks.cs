@@ -58,6 +58,10 @@ public partial class MainWindow
         string closeChoice = "";
         Inspect("close-cancel", () => closeChoice = Dialogs.ClosingChoice(this), "继续编辑");
         if (closeChoice != "cancel") throw new Exception("继续编辑未取消关闭");
+        bool importAccepted = false;
+        Inspect("import-preview", () => importAccepted = Dialogs.PreviewImport(this, [new("导入甲.md", true, 0, ["缺少同批目标：导入乙.md。请返回并同时选择目标文件。"], null)]), "返回选文件");
+        if (importAccepted) throw new Exception("返回选文件未取消导入");
+        CheckRestoreWizard(output, checks);
         File.WriteAllLines(Path.Combine(output, "dialog-checks.txt"), checks);
     }
 }

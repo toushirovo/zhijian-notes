@@ -36,6 +36,21 @@ public partial class MainWindow
                 && !System.Windows.Data.BindingOperations.IsDataBound(item, System.Windows.Controls.Control.VerticalContentAlignmentProperty),
                 list.Name + " 对齐属性不依赖祖先绑定");
         }
+        var originalBody = BodyBox.Text;
+        BodyBox.Text = "测试文字"; BodyBox.Select(0, 4); InsertMarkdown("bold");
+        Check(BodyBox.Text == "**测试文字**", "工具栏加粗选区");
+        BodyBox.Undo(); Check(BodyBox.Text == "测试文字", "工具栏支持单次撤销");
+        BodyBox.Text = "第一项\n第二项"; BodyBox.SelectAll(); InsertMarkdown("list");
+        Check(BodyBox.Text == "- 第一项\n- 第二项", "工具栏多行列表");
+        foreach (var kind in new[] { "heading", "italic", "ordered", "quote", "code", "link" })
+        { BodyBox.Clear(); InsertMarkdown(kind); Check(BodyBox.Text.Length > 0, "工具栏占位内容 " + kind); }
+        BodyBox.Text = originalBody; await SaveCurrent();
+        SetEditorLayout("edit"); Check(PreviewSurface.Visibility == Visibility.Collapsed && EditorColumns.ColumnDefinitions[2].Width.Value == 0, "仅编辑布局");
+        SetEditorLayout("preview"); Check(EditorSurface.Visibility == Visibility.Collapsed && PreviewSurface.Visibility == Visibility.Visible, "仅预览布局");
+        SetEditorLayout("split"); Check(EditorSurface.Visibility == Visibility.Visible && EditorDivider.Visibility == Visibility.Visible, "分屏布局恢复");
+        await ChangeTrash(true); await SetView(true); var readOnlyBody = BodyBox.Text; InsertMarkdown("bold");
+        Check(BodyBox.Text == readOnlyBody && !FormatToolbar.IsEnabled, "回收站禁止工具栏修改");
+        await ChangeTrash(false); await SetView(false); await OpenNote(first.Id);
         RenderPreview(); await Capture(Path.Combine(output, "light.png"));
         await Task.Run(() => workspace.SetTheme("dark")); ApplyTheme(true); await Capture(Path.Combine(output, "dark.png"));
         Check(workspace.Settings.Theme == "dark", "主题设置");

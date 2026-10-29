@@ -5,7 +5,7 @@ using Zhijian.Core;
 
 namespace zhijian.app;
 
-internal static class Dialogs
+internal static partial class Dialogs
 {
     private static Brush Brush(Window owner, string key) => (Brush)owner.FindResource(key);
     private static TextBlock Label(string text, double size = 14) => new()

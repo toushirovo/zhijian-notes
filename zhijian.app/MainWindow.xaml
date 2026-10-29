@@ -105,14 +105,29 @@
       <WrapPanel><Button x:Name="SaveButton" Content="保存" Click="Save_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="LinkButton" Content="插入双链" Click="Link_Click"/><Button Content="导出本篇" Click="ExportOne_Click"/><Button Content="另存正文" Click="SaveAs_Click"/>
        <Button x:Name="DeleteButton" Content="移入回收站" Click="Delete_Click"/><Button x:Name="RestoreButton" Content="恢复笔记" Click="RestoreNote_Click" Visibility="Collapsed"/><Button x:Name="PurgeButton" Content="永久删除…" Click="Purge_Click" Visibility="Collapsed"/>
       </WrapPanel>
+      <WrapPanel x:Name="FormatToolbar" Margin="0,10,0,0">
+       <Button Content="标题" Tag="heading" Click="Format_Click" ToolTip="插入二级标题" Padding="8,5" Focusable="False"/>
+       <Button Content="B" FontWeight="Bold" Tag="bold" Click="Format_Click" ToolTip="选中文字加粗" Padding="8,5" Focusable="False"/>
+       <Button Content="I" FontStyle="Italic" Tag="italic" Click="Format_Click" ToolTip="选中文字设为斜体" Padding="8,5" Focusable="False"/>
+       <Button Content="• 列表" Tag="list" Click="Format_Click" Padding="8,5" Focusable="False"/>
+       <Button Content="1. 列表" Tag="ordered" Click="Format_Click" Padding="8,5" Focusable="False"/>
+       <Button Content="引用" Tag="quote" Click="Format_Click" Padding="8,5" Focusable="False"/>
+       <Button Content="代码" Tag="code" Click="Format_Click" Padding="8,5" Focusable="False"/>
+       <Button Content="网页链接" Tag="link" Click="Format_Click" Padding="8,5" Focusable="False"/>
+      </WrapPanel>
+      <WrapPanel x:Name="LayoutButtons" Margin="0,10,0,0">
+       <Button Content="仅编辑" Tag="edit" Click="Layout_Click" Padding="10,5"/>
+       <Button Content="分屏" Tag="split" Click="Layout_Click" Padding="10,5" Style="{StaticResource PrimaryButton}"/>
+       <Button Content="仅预览" Tag="preview" Click="Layout_Click" Padding="10,5"/>
+      </WrapPanel>
      </StackPanel>
-     <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>
-      <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
+     <Grid x:Name="EditorColumns" Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>
+      <Border x:Name="EditorSurface" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="MARKDOWN  /  编辑" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
        <TextBox x:Name="BodyBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Top" BorderThickness="0" FontFamily="Cascadia Code, Consolas, Microsoft YaHei UI" FontSize="14" Padding="16" TextChanged="Editor_Changed" AutomationProperties.Name="Markdown 正文"/>
       </DockPanel></Border>
-      <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="Transparent"/>
-      <Border Grid.Column="2" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
+      <GridSplitter x:Name="EditorDivider" Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="Transparent"/>
+      <Border x:Name="PreviewSurface" Grid.Column="2" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="PREVIEW  /  安全预览" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
        <FlowDocumentScrollViewer x:Name="Preview" IsToolBarVisible="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"/>
       </DockPanel></Border>

@@ -28,7 +28,14 @@ public partial class MainWindow
     private async void Import_Click(object sender, RoutedEventArgs e)
     {
         if (!NeedWorkspace() || !await SaveCurrent(true)) return;
-        var d = new OpenFileDialog { Filter = "Markdown 文件|*.md", Multiselect = true, Title = "选择要导入的 Markdown 文件" }; if (d.ShowDialog(this) != true) return;
+                var d = new OpenFileDialog { Filter = "Markdown 文件|*.md", Multiselect = true, Title = "第1步：同时选择要导入的Markdown文件及其链接目标" };
+        while (true)
+        {
+            if (d.ShowDialog(this) != true) return;
+            ImportPreviewItem[]? preview = null;
+            if (!await RunJob("正在检查导入文件与链接…", async (ct, _) => preview = await Task.Run(() => ImportPreview.Analyze(d.FileNames, ct)))) return;
+            if (Dialogs.PreviewImport(this, preview!)) break;
+        }
         BatchReport? report = null;
         if (await RunJob("正在导入 Markdown…", async (ct, p) => report = await Task.Run(() => workspace!.Import(d.FileNames, p, ct))))
         {
@@ -63,17 +70,20 @@ public partial class MainWindow
     {
         if (!NeedWorkspace() || !await SaveCurrent(true)) return;
         var path = PickFolder("选择备份位置（工作区之外，建议另一磁盘）"); if (path == null) return;
+        if (!Dialogs.Confirm(this, "创建完整备份", "确认备份内容和保存位置。", $"有效笔记：{workspace!.Count} 篇    回收站：{workspace.TrashCount} 篇\n保存位置：{path}\n\n包含标签、双链和主题设置。完成后请保留整个backup文件夹。", "创建备份")) return;
         string? output = null;
         if (await RunJob("正在创建完整备份…", async (ct, p) => output = await Task.Run(() => workspace!.Backup(path, p, ct)))) Dialogs.Text(this, "备份完成", "备份包含笔记、标签、双链、回收站、主题设置和校验清单。\n\n" + output + "\n\n请妥善保管整个备份文件夹。后续删除笔记不会删除旧备份中的内容。");
     }
     private async void RestoreBackup_Click(object sender, RoutedEventArgs e)
     {
         if (!await SaveCurrent(true)) return;
-        var source = PickFolder("选择备份包（含 manifest.json 的文件夹）"); if (source == null) return;
-        var target = PickFolder("选择新的空文件夹作为恢复目标"); if (target == null) return;
-        if (workspace != null && Disk.Inside(Disk.Root(target), workspace.Path)) { Dialogs.Text(this, "请选择独立的恢复目录", "恢复目录不能放在当前工作区内。请在工作区之外新建一个空文件夹。"); return; }
-        if (await RunJob("正在校验并恢复备份…", async (ct, p) => await Task.Run(() => Workspace.RestoreBackup(source, target, p, ct))))
-        { await SwitchWorkspace(target, false); SaveStatus.Text = "已恢复到新的工作区，原工作区未改动。"; }
+        var plan = Dialogs.RestoreWizard(this, workspace?.Path); if (plan == null) return;
+        if (await RunJob("正在恢复笔记…", async (ct, p) => await Task.Run(() => Workspace.RestoreBackup(plan.Source, plan.Target, p, ct))))
+        {
+            await SwitchWorkspace(plan.Target, false);
+            SaveStatus.Text = "已恢复到新的工作区，原工作区未改动。";
+            Dialogs.Text(this, "恢复完成", "笔记、标签、双链、回收站和主题设置已恢复。\n\n恢复位置：" + plan.Target + "\n\n可在左侧检查笔记数量，再打开笔记核对内容。");
+        }
     }
     private async void Rebuild_Click(object sender, RoutedEventArgs e)
     {

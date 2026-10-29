@@ -1,0 +1,11 @@
+PASS help-light
+PASS report-light
+PASS delete-light
+PASS help-dark
+PASS report-dark
+PASS delete-dark
+PASS confirm-action
+PASS close-cancel
+PASS import-preview
+PASS 恢复路径同目录/父子目录/当前工作区/非空目录保护
+PASS 恢复向导无效来源修正/无效目标修正/返回/确认及真实恢复

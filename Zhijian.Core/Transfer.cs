@@ -24,7 +24,7 @@ public sealed partial class Workspace
                     if (oldIds.Contains(title.ToLowerInvariant())) throw new InvalidDataException("同批次旧 ID 重复，无法确定引用目标。");
                     plans.Add((path, title, body, Guid.NewGuid().ToString(), Disk.Hash(bytes)));
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
                 { report.Items.Add(new(path, "FAILED", Message: ex.Message)); }
             }
             var byOldId = plans.Where(p => Rules.IsId(p.Title.ToLowerInvariant())).ToDictionary(p => p.Title.ToLowerInvariant(), p => p.Id);
@@ -58,7 +58,7 @@ public sealed partial class Workspace
                     Create(p.Title, body, id: p.Id);
                     report.Items.Add(new(p.Path, "SUCCESS", p.Id, string.Join("；", warnings.Distinct())));
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+                catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
                 { report.Items.Add(new(p.Path, "FAILED", p.Id, ex.Message)); }
                 progress?.Report($"正在导入：{++completed}/{plans.Count}");
             }
@@ -102,7 +102,7 @@ public sealed partial class Workspace
                     Disk.Atomic(System.IO.Path.Combine(output, n.Id + ".md"), Rules.Utf8.GetBytes(body));
                     report.Items.Add(new(n.Title!, "SUCCESS", n.Id, outside ? "含本次导出范围之外的 note 链接" : null));
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
                 { report.Items.Add(new(n.Title!, "FAILED", n.Id, ex.Message)); }
                 progress?.Report($"正在导出：{++count}/{notes.Length}");
             }

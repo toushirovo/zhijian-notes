@@ -143,5 +143,29 @@ Test("EX10 正文校验失败阻止编辑", () =>
     var path = Folder("bad-body"); using var w = new Workspace(path, true); var n = w.Create("正文保护", "原正文");
     File.WriteAllText(Path.Combine(path, "bodies", n.Id, n.BodyRev + ".md"), "篡改"); Throws(() => w.Get(n.Id));
 });
+Test("FR08 导入预检缺失目标与同批链接", () =>
+{
+    var dir = Folder("preview-links"); var a = Path.Combine(dir, "导入甲.md"); var b = Path.Combine(dir, "导入乙.md");
+    File.WriteAllText(a, "[去乙](导入乙.md)\n`[忽略](不存在.md)`"); File.WriteAllText(b, "目标");
+    var single = ImportPreview.Analyze([a]); Check(single[0].Warnings.Length == 1 && single[0].MappedLinks == 0);
+    var batch = ImportPreview.Analyze([a, b]); Check(batch[0].Warnings.Length == 0 && batch[0].MappedLinks == 1);
+    using var ws = new Workspace(Folder("preview-import"), true); var report = ws.Import([a, b]);
+    Check(report.SuccessCount == 2 && ws.Backlinks(report.Items[1].NoteId!).Length == 1);
+});
+Test("FR08 导入预检编码大小与无效目标", () =>
+{
+    var dir = Folder("preview-invalid"); var a = Path.Combine(dir, "a.md"); var b = Path.Combine(dir, "b.md"); var c = Path.Combine(dir, "c.md");
+    File.WriteAllText(a, "[坏目标](b.md)"); File.WriteAllBytes(b, [0xc3, 0x28]); File.WriteAllText(c, new string('a', Rules.MaxBodyBytes + 1));
+    var preview = ImportPreview.Analyze([a, b, c]); Check(preview.Count(x => !x.CanImport) == 2 && preview[0].Warnings.Length == 1);
+    using var ws = new Workspace(Folder("mixed-import"), true); var report = ws.Import([a, b, c]); Check(report.SuccessCount == 1 && report.FailedCount == 2);
+    Throws(() => ImportPreview.Analyze(Enumerable.Repeat(a, 501).ToArray()));
+    Throws(() => ImportPreview.Analyze([a], new CancellationToken(true)));
+});
+Test("FR08 导入预检UUID映射且不修改源文件", () =>
+{
+    var dir = Folder("preview-uuid"); var id = Guid.NewGuid().ToString(); var a = Path.Combine(dir, "a.md"); var b = Path.Combine(dir, id + ".md");
+    var body = $"[链接](note:{id})"; File.WriteAllText(a, body); File.WriteAllText(b, "目标");
+    Check(ImportPreview.Analyze([a, b])[0].MappedLinks == 1); Check(File.ReadAllText(a) == body);
+});
 File.WriteAllLines(Path.Combine(root, "checks.txt"), results); Console.WriteLine($"\n{results.Count - failed}/{results.Count} passed. Output: {root}");
 Environment.ExitCode = failed == 0 ? 0 : 1;
