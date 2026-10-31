@@ -111,7 +111,6 @@ public partial class MainWindow : Window
         if (!await RunJob(create ? "正在创建工作区…" : "正在打开工作区…", async (_, p) => next = await Task.Run(() => new Workspace(path, create, p)))) return;
         workspace?.Dispose(); workspace = next!; current = null; dirty = false; trash = false;
         loading = true; SearchBox.Clear(); TagList.SelectedItems.Clear(); loading = false;
-        WorkspaceName.Text = Path.GetFileName(workspace.Path); WorkspacePath.Text = workspace.Path; WorkspacePath.ToolTip = workspace.Path;
         ApplyTheme(workspace.Settings.Theme == "dark");
         if (smokeOutput == null)
         {
