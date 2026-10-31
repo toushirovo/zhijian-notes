@@ -14,6 +14,9 @@ public sealed record NoteRecord
     public DateTimeOffset? CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; init; } = DateTimeOffset.UtcNow;
     public string State { get; init; } = "ACTIVE";
+    public bool Pinned { get; init; }
+    public bool Favorite { get; init; }
+    [JsonIgnore] public string MarkText => string.Join(" · ", new[] { Pinned ? "置顶" : "", Favorite ? "★ 收藏" : "" }.Where(x => x.Length > 0));
     public DateTimeOffset? DeletedAt { get; init; }
     public long? BodyRev { get; init; }
     public string? BodySha256 { get; init; }
@@ -25,7 +28,7 @@ public sealed record NoteRecord
 }
 
 public sealed record WorkspaceInfo(int SchemaVersion, string WorkspaceId);
-public sealed record Preferences(int SchemaVersion = 1, string Theme = "light");
+public sealed record Preferences(int SchemaVersion = 1, string Theme = "light", double ListWidth = 270, double EditorRatio = 0.5);
 public sealed record NoteContent(NoteRecord Record, string Body);
 public sealed record SearchPage(IReadOnlyList<NoteRecord> Items, bool HasMore, long Generation);
 public sealed record BatchItem(string Source, string Status, string? NoteId = null, string? Message = null);

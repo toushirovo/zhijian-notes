@@ -33,6 +33,7 @@ public partial class MainWindow : Window
             Closed += (_, _) => { bindingLog.Flush(); System.Diagnostics.PresentationTraceSources.DataBindingSource.Listeners.Remove(bindingLog); bindingLog.Dispose(); };
         }
         InitializeComponent();
+        DataObject.AddPastingHandler(BodyBox, Body_Pasting);
         saveTimer.Tick += async (_, _) => { saveTimer.Stop(); if (!busy) await SaveCurrent(); };
         searchTimer.Tick += async (_, _) => { searchTimer.Stop(); await RefreshList(); };
         previewTimer.Tick += (_, _) => { previewTimer.Stop(); RenderPreview(); };
@@ -109,9 +110,9 @@ public partial class MainWindow : Window
         if (workspace != null && string.Equals(Disk.Root(path), workspace.Path, StringComparison.OrdinalIgnoreCase)) return;
         Workspace? next = null;
         if (!await RunJob(create ? "正在创建工作区…" : "正在打开工作区…", async (_, p) => next = await Task.Run(() => new Workspace(path, create, p)))) return;
-        workspace?.Dispose(); workspace = next!; current = null; dirty = false; trash = false;
+        workspace?.Dispose(); workspace = next!; current = null; dirty = false; trash = false; favoritesOnly = false;
         loading = true; SearchBox.Clear(); TagList.SelectedItems.Clear(); loading = false;
-        ApplyTheme(workspace.Settings.Theme == "dark");
+        ApplyTheme(workspace.Settings.Theme == "dark"); RestoreLayout();
         if (smokeOutput == null)
         {
             try { Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!); Disk.Atomic(ConfigPath, Encoding.UTF8.GetBytes(workspace.Path)); }
@@ -129,7 +130,8 @@ public partial class MainWindow : Window
         if (workspace == null) return;
         AllButton.Content = $"全部笔记    {workspace.Count}"; TrashButton.Content = $"回收站    {workspace.TrashCount}";
         IndexStatus.Text = workspace.IndexReady ? "本地工作区  ·  索引就绪" : "检索暂不可用  ·  请重建索引";
-        ListHeading.Text = trash ? "回收站" : "全部笔记";
+        ListHeading.Text = trash ? "回收站" : favoritesOnly ? "我的收藏" : "全部笔记";
+        FavoritesButton.Content = $"★  我的收藏    {workspace.All().Count(n => n.Favorite)}"; UpdateMarks();
         SearchHint.Text = trash ? "回收站仅搜索标题" : "搜索标题与正文  ·  Ctrl+K";
         EmptyTrashButton.Visibility = trash ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -142,11 +144,11 @@ public partial class MainWindow : Window
     private async Task RefreshList(bool more = false)
     {
         if (workspace == null || busy) return;
-        var seq = ++searchSequence; var ws = workspace; var query = SearchBox.Text; var tags = TagList.SelectedItems.Cast<string>().ToArray(); var recycle = trash;
+        var seq = ++searchSequence; var ws = workspace; var query = SearchBox.Text; var tags = TagList.SelectedItems.Cast<string>().ToArray(); var recycle = trash; var favorites = favoritesOnly;
         var offset = more ? visibleNotes.Count : 0; var generation = more ? (long?)pageGeneration : null;
         try
         {
-            var page = await Task.Run(() => ws.Search(query, tags, recycle, offset, generation));
+            var page = await Task.Run(() => ws.Search(query, tags, recycle, offset, generation, favorites));
             if (seq != searchSequence || ws != workspace) return;
             if (!more) visibleNotes.Clear(); visibleNotes.AddRange(page.Items); pageGeneration = page.Generation;
             loading = true; NoteList.ItemsSource = visibleNotes.ToArray(); NoteList.SelectedItem = visibleNotes.FirstOrDefault(n => n.Id == current?.Id); loading = false;
@@ -166,10 +168,10 @@ public partial class MainWindow : Window
     private async void More_Click(object sender, RoutedEventArgs e) => await RefreshList(true);
     private async void All_Click(object sender, RoutedEventArgs e) => await SetView(false);
     private async void Trash_Click(object sender, RoutedEventArgs e) => await SetView(true);
-    private async Task SetView(bool recycle)
+    private async Task SetView(bool recycle, bool favorites = false)
     {
         if (busy || !NeedWorkspace() || !await SaveCurrent(true)) return;
-        trash = recycle; ClearEditor(); loading = true; SearchBox.Clear(); TagList.SelectedItems.Clear(); loading = false;
+        trash = recycle; favoritesOnly = favorites; ClearEditor(); loading = true; SearchBox.Clear(); TagList.SelectedItems.Clear(); loading = false;
         await RefreshList(); if (visibleNotes.Count > 0) await OpenNote(visibleNotes[0].Id);
     }
     private async void Theme_Click(object sender, RoutedEventArgs e)

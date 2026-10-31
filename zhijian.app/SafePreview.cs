@@ -66,8 +66,11 @@ internal static class SafePreview
                         try
                         {
                             var bitmap = ImageCodec.Decode(imageSource(link.Url!));
-                            var picture = new System.Windows.Controls.Image { Source = bitmap, Stretch = Stretch.Uniform, MaxHeight = 360, MaxWidth = 420, Margin = new Thickness(0, 10, 0, 10), ToolTip = "工作区本地图片" };
-                            picture.SetBinding(FrameworkElement.WidthProperty, new System.Windows.Data.Binding("ActualWidth") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(System.Windows.Controls.FlowDocumentScrollViewer), 1), Converter = new PreviewImageWidth() });
+                            var sizeMatch = System.Text.RegularExpressions.Regex.Match(link.Title ?? "", @"^width=(\d{1,4})$");
+                            var maxWidth = sizeMatch.Success ? Math.Clamp(int.Parse(sizeMatch.Groups[1].Value), 80, 1200) : 1000;
+                            var picture = new System.Windows.Controls.Image { Source = bitmap, Stretch = Stretch.Uniform, MaxWidth = maxWidth, Margin = new Thickness(0, 10, 0, 10), ToolTip = "点击放大或调整显示尺寸", Cursor = System.Windows.Input.Cursors.Hand, Tag = link.Url };
+                            picture.SetBinding(FrameworkElement.WidthProperty, new System.Windows.Data.Binding("ActualWidth") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(System.Windows.Controls.FlowDocumentScrollViewer), 1), Converter = new PreviewImageWidth(), ConverterParameter = maxWidth });
+                            picture.MouseLeftButtonUp += (_, e) => { e.Handled = true; navigate($"image:{link.Span.Start}:{link.Span.End}:{link.Url}"); };
                             return new InlineUIContainer(picture);
                         }
                         catch { return new Run("[图片不可用：文件缺失、损坏或尺寸超限]"); }
@@ -103,7 +106,7 @@ internal static class SafePreview
     }
     private sealed class PreviewImageWidth : System.Windows.Data.IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value is double width ? Math.Max(80, Math.Min(420, width - 56)) : 240d;
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value is double width ? Math.Max(80, Math.Min(parameter is int limit ? limit : 1000, width - 56)) : 240d;
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotSupportedException();
     }
     private static WpfInline Link(string url, WpfInline[] children, Brush accent, Action<string> navigate, Func<string, byte[]>? imageSource = null)

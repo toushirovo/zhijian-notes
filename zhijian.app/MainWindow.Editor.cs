@@ -81,7 +81,7 @@ public partial class MainWindow
         if (busy || !NeedWorkspace() || !await SaveCurrent(true)) return;
         try
         {
-            var n = await Task.Run(() => workspace!.Create("未命名笔记")); trash = false;
+            var n = await Task.Run(() => workspace!.Create("未命名笔记")); trash = false; favoritesOnly = false;
             loading = true; SearchBox.Clear(); TagList.SelectedItems.Clear(); loading = false;
             await RefreshList(); await OpenNote(n.Id); TitleBox.Focus(); TitleBox.SelectAll();
         }
@@ -102,6 +102,12 @@ public partial class MainWindow
     }
     private async void Navigate(string url)
     {
+        if (url.StartsWith("image:", StringComparison.Ordinal))
+        {
+            var parts = url.Split(':' , 4);
+            if (parts.Length == 4 && int.TryParse(parts[1], out var start) && int.TryParse(parts[2], out var end)) OpenImage(parts[3], start, end);
+            return;
+        }
         var id = MarkdownLinks.Target(url);
         if (id != null)
         {

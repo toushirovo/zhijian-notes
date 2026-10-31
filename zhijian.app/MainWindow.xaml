@@ -77,8 +77,8 @@
     <Border/>
    </DockPanel>
   </Border>
-  <Grid Grid.Row="1">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="270"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+  <Grid Grid.Row="1" x:Name="WorkspaceColumns">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="270" MinWidth="220" MaxWidth="380"/><ColumnDefinition Width="7"/><ColumnDefinition Width="*" MinWidth="470"/></Grid.ColumnDefinitions>
    <Border Background="{DynamicResource SideBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="16,24,14,16">
     <DockPanel>
      <StackPanel DockPanel.Dock="Bottom">
@@ -90,7 +90,7 @@
      </StackPanel>
      <StackPanel DockPanel.Dock="Top">
       <Button x:Name="NewButton" Content="＋  新建笔记" Style="{StaticResource PrimaryButton}" Click="New_Click" Margin="0,0,0,24"/>
-      <Button x:Name="AllButton" Content="全部笔记" Click="All_Click" Margin="0,0,0,7"/><Button x:Name="TrashButton" Content="回收站" Click="Trash_Click" Margin="0,0,0,20"/>
+      <Button x:Name="AllButton" Content="全部笔记" Click="All_Click" Margin="0,0,0,7"/><Button x:Name="FavoritesButton" Content="★  我的收藏" Click="Favorites_Click" Margin="0,0,0,7"/><Button x:Name="TrashButton" Content="回收站" Click="Trash_Click" Margin="0,0,0,20"/>
       <DockPanel Margin="5,0,0,6"><Button Content="清除" Click="ClearTags_Click" Padding="5,2" FontSize="10" DockPanel.Dock="Right"/><TextBlock Text="标签 · 多选交集" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center"/></DockPanel>
      </StackPanel>
      <ListBox x:Name="TagList" ItemContainerStyle="{StaticResource {x:Type ListBoxItem}}" SelectionMode="Multiple" SelectionChanged="Tags_SelectionChanged"/>
@@ -110,6 +110,7 @@
      </StackPanel>
      <ListBox x:Name="NoteList" ItemContainerStyle="{StaticResource {x:Type ListBoxItem}}" SelectionChanged="Note_SelectionChanged">
       <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,4">
+       <TextBlock Text="{Binding MarkText}" FontSize="10" Foreground="{DynamicResource AccentTextBrush}"/>
        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
        <TextBlock Text="{Binding Snippet}" TextWrapping="Wrap" MaxHeight="38" FontSize="11" Foreground="{DynamicResource MutedBrush}">
         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Margin" Value="0,7,0,0"/><Style.Triggers><DataTrigger Binding="{Binding Snippet}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
@@ -120,7 +121,8 @@
      </ListBox>
     </DockPanel>
    </Border>
-   <Grid Grid.Column="2" Margin="24,24,24,16">
+   <GridSplitter Grid.Column="2" Width="7" HorizontalAlignment="Stretch" Background="{DynamicResource LineBrush}" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" DragCompleted="Divider_DragCompleted" ToolTip="拖动调整笔记列表宽度"/>
+   <Grid Grid.Column="3" Margin="20,24,20,16">
     <Grid x:Name="EditorPanel" Visibility="Collapsed">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="110"/></Grid.RowDefinitions>
      <TextBlock x:Name="NoteMeta" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,13"/>
@@ -162,6 +164,8 @@
         </Button>
         <Button x:Name="NoteActionsButton" Content="更多 ···" Click="OpenTools_Click" Padding="12,6" ToolTip="导出、另存、笔记信息与回收站操作">
          <Button.ContextMenu><ContextMenu>
+          <MenuItem x:Name="PinMenu" Header="置顶笔记" Click="Pin_Click"/>
+          <MenuItem x:Name="FavoriteMenu" Header="收藏笔记" Click="Favorite_Click"/><Separator/>
           <MenuItem x:Name="ExportOneMenu" Header="导出本篇…" Click="ExportOne_Click"/>
           <MenuItem Header="另存正文…" Click="SaveAs_Click"/>
           <MenuItem Header="笔记信息" Click="NoteInfo_Click"/>
@@ -177,9 +181,9 @@
      <Grid x:Name="EditorColumns" Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>
       <Border x:Name="EditorSurface" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="MARKDOWN  /  编辑" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
-       <TextBox x:Name="BodyBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Top" BorderThickness="0" FontFamily="Cascadia Code, Consolas, Microsoft YaHei UI" FontSize="14" Padding="16" TextChanged="Editor_Changed" AutomationProperties.Name="Markdown 正文"/>
+       <TextBox AllowDrop="True" PreviewDragOver="Body_DragOver" PreviewDrop="Body_Drop" x:Name="BodyBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Top" BorderThickness="0" FontFamily="Cascadia Code, Consolas, Microsoft YaHei UI" FontSize="14" Padding="16" TextChanged="Editor_Changed" AutomationProperties.Name="Markdown 正文"/>
       </DockPanel></Border>
-      <GridSplitter x:Name="EditorDivider" Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="Transparent"/>
+      <GridSplitter x:Name="EditorDivider" Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="{DynamicResource LineBrush}" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" DragCompleted="Divider_DragCompleted" ToolTip="拖动调整编辑与预览比例"/>
       <Border x:Name="PreviewSurface" Grid.Column="2" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>
        <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="14,10"><TextBlock Text="PREVIEW  /  安全预览" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></Border>
        <FlowDocumentScrollViewer x:Name="Preview" IsToolBarVisible="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"/>

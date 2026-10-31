@@ -74,6 +74,31 @@ public partial class MainWindow
         });
         if (chosenColor != "#E06C75") throw new Exception("颜色选择返回错误");
         CheckRestoreWizard(output, checks);
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+        {
+            drawing.DrawRectangle(Brushes.SeaGreen, null, new Rect(0, 0, 640, 300));
+            drawing.DrawEllipse(Brushes.LightBlue, null, new Point(430, 150), 110, 110);
+        }
+        var imageBitmap = new RenderTargetBitmap(640, 300, 96, 96, PixelFormats.Pbgra32); imageBitmap.Render(visual);
+        var imageBytes = ImageCodec.Png(imageBitmap);
+        foreach (var theme in new[] { false, true })
+        {
+            ApplyTheme(theme); int? size = null;
+            Inspect("image-viewer-" + (theme ? "dark" : "light"), () => size = Dialogs.ImageViewer(this, imageBytes, true), "应用显示尺寸", dialog =>
+            {
+                IEnumerable<DependencyObject> Walk(DependencyObject root)
+                { yield return root; for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) foreach (var child in Walk(VisualTreeHelper.GetChild(root, i))) yield return child; }
+                var elements = Walk(dialog).ToArray();
+                elements.OfType<ComboBox>().Single().SelectedIndex = 3;
+                elements.OfType<Slider>().Single().Value = 150;
+                if (elements.OfType<Image>().Single().Width != 975) throw new Exception("图片查看缩放未生效");
+            });
+            if (size != 720) throw new Exception("图片尺寸选择返回错误");
+        }
+        int? readOnlySize = 1;
+        Inspect("image-viewer-readonly", () => readOnlySize = Dialogs.ImageViewer(this, imageBytes, false), "关闭");
+        if (readOnlySize != null) throw new Exception("只读图片不应修改尺寸");
         File.WriteAllLines(Path.Combine(output, "dialog-checks.txt"), checks);
     }
 }

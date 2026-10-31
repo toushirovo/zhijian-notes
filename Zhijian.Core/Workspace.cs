@@ -93,7 +93,7 @@ public sealed partial class Workspace : IDisposable
     public NoteContent Get(string id) { lock (gate) { Ensure(); var n = records[id]; return new(n, ReadBody(n)); } }
     public NoteRecord[] All(bool trash = false) { lock (gate) return records.Values.Where(n => n.State == (trash ? "TRASH" : "ACTIVE")).OrderByDescending(n => n.UpdatedAt).ThenBy(n => n.Id, StringComparer.Ordinal).ToArray(); }
     public string[] AllTags() { lock (gate) return records.Values.Where(n => n.State == "ACTIVE").SelectMany(n => n.Tags!).DistinctBy(Rules.Fold).Order().ToArray(); }
-    public SearchPage Search(string query, string[] tags, bool trash = false, int offset = 0, long? expectedGeneration = null)
+    public SearchPage Search(string query, string[] tags, bool trash = false, int offset = 0, long? expectedGeneration = null, bool favoritesOnly = false)
     {
         lock (gate)
         {
@@ -104,12 +104,16 @@ public sealed partial class Workspace : IDisposable
             if (query.Length > 0 && !trash)
             {
                 if (!IndexReady || index == null) throw new InvalidOperationException("索引尚未就绪，请先重建索引。");
-                items = index.Search(query, tags, offset, 51).Select(id => records[id]).ToArray();
+                items = index.Search(query, tags, 0, int.MaxValue).Select(id => records[id])
+                    .Where(n => !favoritesOnly || n.Favorite).OrderByDescending(n => n.Pinned)
+                    .ThenByDescending(n => n.UpdatedAt).ThenBy(n => n.Id, StringComparer.Ordinal).Skip(offset).Take(51).ToArray();
             }
             else
             {
                 items = All(trash).Where(n => tags.All(t => n.Tags!.Any(nt => Rules.Fold(nt) == Rules.Fold(t))))
                     .Where(n => query.Length == 0 || Rules.Fold(n.Title!).Contains(Rules.Fold(query), StringComparison.Ordinal))
+                    .Where(n => !favoritesOnly || n.Favorite).OrderByDescending(n => !trash && n.Pinned)
+                    .ThenByDescending(n => n.UpdatedAt).ThenBy(n => n.Id, StringComparer.Ordinal)
                     .Skip(offset).Take(51).ToArray();
             }
             var page = items.Take(50).ToArray();
@@ -217,7 +221,7 @@ public sealed partial class Workspace : IDisposable
         lock (gate)
         {
             Ensure(); if (theme is not ("light" or "dark")) throw new ArgumentException("无效主题。");
-            var next = new Preferences(1, theme); Disk.Atomic(At("settings.json"), Disk.Serialize(next)); Settings = next;
+            var next = Settings with { Theme = theme }; Disk.Atomic(At("settings.json"), Disk.Serialize(next)); Settings = next;
         }
     }
     public void RebuildIndex(IProgress<string>? progress = null, CancellationToken cancel = default)

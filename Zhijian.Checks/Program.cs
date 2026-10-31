@@ -200,5 +200,48 @@ Test("FR12 图片识别不处理代码块", () =>
     var body = $"```\n![代码]({url})\n```\n\n`![行内]({url})`"; Check(NoteMedia.Assets(body).Length == 0);
     Check(MarkdownLinks.Rewrite(body, _ => "assets/new.png", images: true) == body);
 });
+Test("FR13 置顶收藏分页搜索与版本保护", () =>
+{
+    using var ws = new Workspace(Folder("organization"), true);
+    var first = ws.Create("older", "needle");
+    for (int i = 0; i < 55; i++) ws.Create("newer" + i, "needle");
+    var marked = ws.SetMarks(first.Id, first.Revision, true, true);
+    Check(ws.Search("", []).Items[0].Id == first.Id);
+    Check(ws.Search("needle", []).Items[0].Id == first.Id);
+    var page = ws.Search("needle", []); var next = ws.Search("needle", [], offset: 50, expectedGeneration: page.Generation);
+    Check(page.Items.Concat(next.Items).Select(n => n.Id).Distinct().Count() == 56);
+    Check(ws.Search("needle", [], favoritesOnly: true).Items.Single().Id == first.Id);
+    Throws(() => ws.SetMarks(first.Id, first.Revision, false, false));
+    var saved = ws.Save(marked.Id, marked.Revision, "edited", "needle updated", []);
+    Check(saved.Pinned && saved.Favorite);
+    var deleted = ws.SetTrash(saved.Id, saved.Revision, true);
+    Check(ws.Search("", [], favoritesOnly: true).Items.Count == 0);
+    Throws(() => ws.SetMarks(deleted.Id, deleted.Revision, false, false));
+    var restored = ws.SetTrash(deleted.Id, deleted.Revision, false);
+    Check(restored.Pinned && restored.Favorite);
+});
+Test("FR13 标记分栏重开与备份恢复", () =>
+{
+    var path = Folder("organization-persist"); string id; string backup;
+    using (var ws = new Workspace(path, true))
+    {
+        var n = ws.Create("收藏"); id = n.Id; ws.SetMarks(id, n.Revision, true, true);
+        ws.SetLayout(315, 0.65); ws.SetTheme("dark");
+        Check(ws.Settings.ListWidth == 315 && ws.Settings.EditorRatio == 0.65);
+        Throws(() => ws.SetLayout(double.NaN, 0.5)); Throws(() => ws.SetLayout(270, 1));
+        backup = ws.Backup(Folder("organization-backups"));
+    }
+    using (var reopened = new Workspace(path)) Check(reopened.Get(id).Record.Favorite && reopened.Settings.ListWidth == 315);
+    var target = Folder("organization-restored"); Workspace.RestoreBackup(backup, target);
+    using var restored = new Workspace(target);
+    Check(restored.Get(id).Record.Pinned && restored.Get(id).Record.Favorite && restored.Settings.EditorRatio == 0.65);
+});
+Test("FR13 旧版设置和笔记默认兼容", () =>
+{
+    var settings = System.Text.Json.JsonSerializer.Deserialize<Preferences>("{\"schemaVersion\":1,\"theme\":\"light\"}", Rules.Json)!;
+    Check(settings.ListWidth == 270 && settings.EditorRatio == 0.5);
+    var record = System.Text.Json.JsonSerializer.Deserialize<NoteRecord>("{}", Rules.Json)!;
+    Check(!record.Pinned && !record.Favorite);
+});
 File.WriteAllLines(Path.Combine(root, "checks.txt"), results); Console.WriteLine($"\n{results.Count - failed}/{results.Count} passed. Output: {root}");
 Environment.ExitCode = failed == 0 ? 0 : 1;

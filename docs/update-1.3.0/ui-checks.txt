@@ -1,0 +1,59 @@
+PASS 编辑与两秒自动保存
+PASS 双链索引
+PASS 界面搜索
+PASS 界面反向引用
+PASS 回收站只读
+PASS 恢复笔记
+PASS NoteList 对齐属性不依赖祖先绑定
+PASS TagList 对齐属性不依赖祖先绑定
+PASS Backlinks 对齐属性不依赖祖先绑定
+PASS 工具栏加粗选区
+PASS 工具栏支持单次撤销
+PASS 工具栏多行列表
+PASS 工具栏占位内容 heading
+PASS 工具栏占位内容 italic
+PASS 工具栏占位内容 ordered
+PASS 工具栏占位内容 quote
+PASS 工具栏占位内容 code
+PASS 工具栏占位内容 link
+PASS 仅编辑布局
+PASS 仅预览布局
+PASS 分屏布局恢复
+PASS 回收站禁止工具栏修改
+PASS 回收站更多菜单状态
+PASS 日常笔记信息不显示内部编号
+PASS 四组菜单保留全部21项操作
+PASS 左键打开格式菜单
+PASS 格式菜单操作保留正文选区
+PASS 视图菜单切换及选中标记 edit
+PASS 视图菜单切换及选中标记 preview
+PASS 视图菜单切换及选中标记 split
+PASS 分组菜单布局 浅色
+PASS 分组菜单布局 深色
+PASS 文字颜色写入Markdown
+PASS 预览显示指定文字颜色
+PASS 光标所在彩色文字可重新换色
+PASS 恢复默认文字颜色
+PASS 颜色操作支持撤销
+PASS 插入图片复制到工作区
+PASS 原图移动后本地图片仍显示
+PASS 图片引用持久保存
+PASS 远程图片不会触发读取
+PASS 仅允许指定颜色语法其余HTML按文字处理
+PASS 置顶收藏菜单与持久记录同步
+PASS 置顶笔记排在列表首位
+PASS 收藏入口筛选笔记
+PASS 取消收藏即时退出收藏列表
+PASS 回收站禁止置顶收藏操作
+PASS 从回收站恢复保留置顶收藏
+PASS 分栏配置恢复
+PASS 切换视图保留分栏比例
+PASS 拖动结束保存列表宽度
+PASS 拖入只接受PNG或JPEG
+PASS 图片尺寸写入Markdown标题字段
+PASS 预览按尺寸渲染且支持点击
+PASS 图片尺寸单次撤销
+PASS 直接粘贴位图插入并保存
+PASS 主题设置
+PASS 危险语法安全渲染
+PASS 已保存工作区正常关闭

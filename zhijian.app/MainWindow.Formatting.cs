@@ -13,9 +13,9 @@ public partial class MainWindow
         EditorDivider.Visibility = mode == "split" ? Visibility.Visible : Visibility.Collapsed;
         EditorColumns.ColumnDefinitions[0].MinWidth = mode == "preview" ? 0 : 200;
         EditorColumns.ColumnDefinitions[2].MinWidth = mode == "edit" ? 0 : 200;
-        EditorColumns.ColumnDefinitions[0].Width = mode == "preview" ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        EditorColumns.ColumnDefinitions[0].Width = mode == "preview" ? new GridLength(0) : new GridLength(mode == "split" ? splitRatio : 1, GridUnitType.Star);
         EditorColumns.ColumnDefinitions[1].Width = new GridLength(mode == "split" ? 9 : 0);
-        EditorColumns.ColumnDefinitions[2].Width = mode == "edit" ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        EditorColumns.ColumnDefinitions[2].Width = mode == "edit" ? new GridLength(0) : new GridLength(mode == "split" ? 1 - splitRatio : 1, GridUnitType.Star);
         foreach (var item in LayoutMenu.Items.OfType<MenuItem>()) item.IsChecked = (string)item.Tag == mode;
         ViewMenuButton.Content = "视图 · " + (mode == "edit" ? "仅编辑" : mode == "preview" ? "仅预览" : "分屏") + " ▾";
         if (mode != "edit") RenderPreview();

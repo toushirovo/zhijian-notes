@@ -31,6 +31,9 @@ public partial class MainWindow
         UpdateLayout();
         foreach (var list in new[] { NoteList, TagList, Backlinks })
         {
+            if (list.Items.Count > 0) list.ScrollIntoView(list.Items[0]);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            list.UpdateLayout();
             var item = list.ItemContainerGenerator.ContainerFromIndex(0) as System.Windows.Controls.ListBoxItem;
             Check(item != null && !System.Windows.Data.BindingOperations.IsDataBound(item, System.Windows.Controls.Control.HorizontalContentAlignmentProperty)
                 && !System.Windows.Data.BindingOperations.IsDataBound(item, System.Windows.Controls.Control.VerticalContentAlignmentProperty),
@@ -54,6 +57,7 @@ public partial class MainWindow
         await ChangeTrash(false); await SetView(false); await OpenNote(first.Id);
         await CheckTools(output, Check);
         await CheckMedia(output, Check);
+        await CheckEnhancements(output, Check);
         RenderPreview(); await Capture(Path.Combine(output, "light.png"));
         await Task.Run(() => workspace.SetTheme("dark")); ApplyTheme(true); await Capture(Path.Combine(output, "dark.png"));
         Check(workspace.Settings.Theme == "dark", "主题设置");
