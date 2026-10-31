@@ -29,9 +29,10 @@ public partial class MainWindow
             var content = await Task.Run(() => workspace.Get(id));
             loading = true; current = content.Record; TitleBox.Text = current.Title; TagsBox.Text = string.Join(", ", current.Tags!); BodyBox.Text = content.Body;
             bool readOnly = current.State != "ACTIVE"; TitleBox.IsReadOnly = TagsBox.IsReadOnly = BodyBox.IsReadOnly = readOnly;
+            ExportOneMenu.IsEnabled = !readOnly;
             SaveButton.IsEnabled = LinkButton.IsEnabled = FormatToolbar.IsEnabled = MediaToolbar.IsEnabled = !readOnly; DeleteButton.Visibility = readOnly ? Visibility.Collapsed : Visibility.Visible;
             RestoreButton.Visibility = PurgeButton.Visibility = readOnly ? Visibility.Visible : Visibility.Collapsed;
-            NoteMeta.Text = $"{(readOnly ? "回收站 · 只读" : "笔记")}  /  {current.ShortId}   ·   更新于 {current.UpdatedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
+            NoteMeta.Text = $"{(readOnly ? "回收站 · 只读" : "笔记")}  ·  更新于 {current.UpdatedAt.ToLocalTime():yyyy-MM-dd HH:mm}";
             NoteList.SelectedItem = visibleNotes.FirstOrDefault(n => n.Id == id); dirty = false; loading = false;
             EditorPanel.Visibility = Visibility.Visible; EmptyPanel.Visibility = Visibility.Collapsed;
             SaveStatus.Text = "✓ 已保存"; RenderPreview(); await RefreshBacklinks(); UpdateStatus();
@@ -59,7 +60,7 @@ public partial class MainWindow
                 var saved = await Task.Run(() => ws.Save(note.Id, note.Revision, title, body, tags));
                 if (current?.Id == saved.Id && ws == workspace)
                 {
-                    current = saved; dirty = seq != editSequence;
+                    current = saved; NoteMeta.Text = $"笔记  ·  更新于 {current.UpdatedAt.ToLocalTime():yyyy-MM-dd HH:mm}"; dirty = seq != editSequence;
                     SaveStatus.Text = dirty ? "● 未保存 · 有新的编辑" : $"✓ 已保存 {DateTime.Now:HH:mm:ss}";
                     if (dirty) saveTimer.Start(); else { await RefreshTags(); await RefreshList(); await RefreshBacklinks(); }
                 }

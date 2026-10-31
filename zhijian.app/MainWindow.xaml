@@ -36,6 +36,31 @@
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
+  <Style TargetType="ContextMenu">
+   <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+   <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+   <Setter Property="MinWidth" Value="210"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ContextMenu">
+    <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="6"><StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/></Border>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="MenuItem">
+   <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="MenuItem">
+    <Border x:Name="MenuSurface" Background="Transparent" CornerRadius="6" Padding="10,8" Margin="0,1">
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <TextBlock x:Name="CheckMark" Text="✓" Visibility="Hidden" Foreground="{DynamicResource AccentTextBrush}"/>
+      <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"/>
+     </Grid>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="MenuSurface" Property="Background" Value="{DynamicResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsChecked" Value="True"><Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="MenuSurface" Property="Opacity" Value="0.4"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="Separator"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Separator"><Border Height="1" Margin="10,5" Background="{DynamicResource LineBrush}"/></ControlTemplate></Setter.Value></Setter></Style>
  </Window.Resources>
  <Grid Background="{DynamicResource CanvasBrush}">
   <Grid.RowDefinitions><RowDefinition Height="78"/><RowDefinition Height="*"/><RowDefinition Height="38"/></Grid.RowDefinitions>
@@ -90,7 +115,7 @@
         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Margin" Value="0,7,0,0"/><Style.Triggers><DataTrigger Binding="{Binding Snippet}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
        </TextBlock>
        <TextBlock Text="{Binding TagText}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" Margin="0,8,0,8" TextTrimming="CharacterEllipsis"/>
-       <DockPanel><TextBlock Text="{Binding ShortId}" FontSize="10" Foreground="{DynamicResource MutedBrush}" DockPanel.Dock="Right"/><TextBlock Text="{Binding DisplayTime}" FontSize="10" Foreground="{DynamicResource MutedBrush}"/></DockPanel>
+       <TextBlock Text="{Binding DisplayTime}" FontSize="10" Foreground="{DynamicResource MutedBrush}"/>
       </StackPanel></DataTemplate></ListBox.ItemTemplate>
      </ListBox>
     </DockPanel>
@@ -102,31 +127,52 @@
      <TextBox x:Name="TitleBox" Grid.Row="1" FontSize="26" FontWeight="SemiBold" Padding="0,4" Background="Transparent" BorderThickness="0" TextChanged="Editor_Changed" AutomationProperties.Name="笔记标题"/>
      <StackPanel Grid.Row="2" Margin="0,14,0,16">
       <DockPanel Margin="0,0,0,14"><TextBlock Text="标签" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,0,12,0"/><TextBox x:Name="TagsBox" TextChanged="Editor_Changed" ToolTip="使用英文逗号或中文逗号分隔标签" AutomationProperties.Name="笔记标签" Padding="8,5"/></DockPanel>
-      <WrapPanel><Button x:Name="SaveButton" Content="保存" Click="Save_Click" Style="{StaticResource PrimaryButton}"/><Button x:Name="LinkButton" Content="插入双链" Click="Link_Click"/><Button Content="导出本篇" Click="ExportOne_Click"/><Button Content="另存正文" Click="SaveAs_Click"/>
-       <Button x:Name="DeleteButton" Content="移入回收站" Click="Delete_Click"/><Button x:Name="RestoreButton" Content="恢复笔记" Click="RestoreNote_Click" Visibility="Collapsed"/><Button x:Name="PurgeButton" Content="永久删除…" Click="Purge_Click" Visibility="Collapsed"/>
-      </WrapPanel>
-      <WrapPanel x:Name="FormatToolbar" Margin="0,10,0,0">
-       <Button Content="标题" Tag="heading" Click="Format_Click" ToolTip="插入二级标题" Padding="8,5" Focusable="False"/>
-       <Button Content="B" FontWeight="Bold" Tag="bold" Click="Format_Click" ToolTip="选中文字加粗" Padding="8,5" Focusable="False"/>
-       <Button Content="I" FontStyle="Italic" Tag="italic" Click="Format_Click" ToolTip="选中文字设为斜体" Padding="8,5" Focusable="False"/>
-       <Button Content="• 列表" Tag="list" Click="Format_Click" Padding="8,5" Focusable="False"/>
-       <Button Content="1. 列表" Tag="ordered" Click="Format_Click" Padding="8,5" Focusable="False"/>
-       <Button Content="引用" Tag="quote" Click="Format_Click" Padding="8,5" Focusable="False"/>
-       <Button Content="代码" Tag="code" Click="Format_Click" Padding="8,5" Focusable="False"/>
-       <Button Content="网页链接" Tag="link" Click="Format_Click" Padding="8,5" Focusable="False"/>
-      </WrapPanel>
-      <WrapPanel Margin="0,8,0,0">
-      <WrapPanel x:Name="MediaToolbar" Margin="0,0,12,0">
-       <Button x:Name="ColorButton" Content="A · 文字颜色" Click="Color_Click" Padding="10,5" ToolTip="预设色、自定义RGB与恢复默认颜色"/>
-       <Button Content="＋ 插入图片" Click="Image_Click" Padding="10,5" ToolTip="复制PNG或JPEG到工作区，随笔记备份"/>
-       <Button Content="粘贴图片" Click="PasteImage_Click" Padding="10,5" ToolTip="从剪贴板插入截图"/>
-      </WrapPanel>
-      <WrapPanel x:Name="LayoutButtons" Margin="0,0,0,0">
-       <Button Content="仅编辑" Tag="edit" Click="Layout_Click" Padding="10,5"/>
-       <Button Content="分屏" Tag="split" Click="Layout_Click" Padding="10,5" Style="{StaticResource PrimaryButton}"/>
-       <Button Content="仅预览" Tag="preview" Click="Layout_Click" Padding="10,5"/>
-      </WrapPanel>
-      </WrapPanel>
+      <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="10" Padding="8">
+       <WrapPanel>
+        <Button x:Name="SaveButton" Content="保存" Click="Save_Click" Style="{StaticResource PrimaryButton}" Padding="14,6" ToolTip="保存当前笔记 · Ctrl+S"/>
+        <Button x:Name="FormatToolbar" Content="文字格式 ▾" Click="OpenTools_Click" Padding="12,6" ToolTip="标题、粗体、斜体、列表、引用、代码和颜色">
+         <Button.ContextMenu><ContextMenu>
+          <MenuItem Header="标题" Tag="heading" Click="Format_Click"/>
+          <MenuItem Header="粗体" Tag="bold" Click="Format_Click"/>
+          <MenuItem Header="斜体" Tag="italic" Click="Format_Click"/>
+          <Separator/>
+          <MenuItem Header="无序列表" Tag="list" Click="Format_Click"/>
+          <MenuItem Header="有序列表" Tag="ordered" Click="Format_Click"/>
+          <MenuItem Header="引用" Tag="quote" Click="Format_Click"/>
+          <MenuItem Header="代码块" Tag="code" Click="Format_Click"/>
+          <Separator/>
+          <MenuItem x:Name="ColorButton" Header="文字颜色…" Click="Color_Click"/>
+         </ContextMenu></Button.ContextMenu>
+        </Button>
+        <Button x:Name="MediaToolbar" Content="插入内容 ▾" Click="OpenTools_Click" Padding="12,6" ToolTip="双链、网页链接、本地图片和剪贴板图片">
+         <Button.ContextMenu><ContextMenu>
+          <MenuItem x:Name="LinkButton" Header="笔记双链…" Click="Link_Click"/>
+          <MenuItem Header="网页链接" Tag="link" Click="Format_Click"/>
+          <Separator/>
+          <MenuItem Header="本地图片…" Click="Image_Click"/>
+          <MenuItem Header="粘贴剪贴板图片" Click="PasteImage_Click"/>
+         </ContextMenu></Button.ContextMenu>
+        </Button>
+        <Button x:Name="ViewMenuButton" Content="视图 · 分屏 ▾" Click="OpenTools_Click" Padding="12,6" ToolTip="切换仅编辑、分屏或仅预览">
+         <Button.ContextMenu><ContextMenu x:Name="LayoutMenu">
+          <MenuItem Header="仅编辑" Tag="edit" Click="Layout_Click"/>
+          <MenuItem Header="分屏" Tag="split" Click="Layout_Click" IsChecked="True"/>
+          <MenuItem Header="仅预览" Tag="preview" Click="Layout_Click"/>
+         </ContextMenu></Button.ContextMenu>
+        </Button>
+        <Button x:Name="NoteActionsButton" Content="更多 ···" Click="OpenTools_Click" Padding="12,6" ToolTip="导出、另存、笔记信息与回收站操作">
+         <Button.ContextMenu><ContextMenu>
+          <MenuItem x:Name="ExportOneMenu" Header="导出本篇…" Click="ExportOne_Click"/>
+          <MenuItem Header="另存正文…" Click="SaveAs_Click"/>
+          <MenuItem Header="笔记信息" Click="NoteInfo_Click"/>
+          <Separator/>
+          <MenuItem x:Name="DeleteButton" Header="移入回收站" Click="Delete_Click"/>
+          <MenuItem x:Name="RestoreButton" Header="恢复笔记" Click="RestoreNote_Click" Visibility="Collapsed"/>
+          <MenuItem x:Name="PurgeButton" Header="永久删除…" Click="Purge_Click" Visibility="Collapsed"/>
+         </ContextMenu></Button.ContextMenu>
+        </Button>
+       </WrapPanel>
+      </Border>
      </StackPanel>
      <Grid x:Name="EditorColumns" Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*" MinWidth="200"/></Grid.ColumnDefinitions>
       <Border x:Name="EditorSurface" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="8"><DockPanel>

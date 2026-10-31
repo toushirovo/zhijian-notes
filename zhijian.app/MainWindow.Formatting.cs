@@ -4,7 +4,7 @@ namespace zhijian.app;
 public partial class MainWindow
 {
     private string editorLayout = "split";
-    private void Layout_Click(object sender, RoutedEventArgs e) => SetEditorLayout((string)((Button)sender).Tag);
+    private void Layout_Click(object sender, RoutedEventArgs e) => SetEditorLayout((string)((FrameworkElement)sender).Tag);
     private void SetEditorLayout(string mode)
     {
         editorLayout = mode;
@@ -16,11 +16,11 @@ public partial class MainWindow
         EditorColumns.ColumnDefinitions[0].Width = mode == "preview" ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
         EditorColumns.ColumnDefinitions[1].Width = new GridLength(mode == "split" ? 9 : 0);
         EditorColumns.ColumnDefinitions[2].Width = mode == "edit" ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
-        foreach (var button in LayoutButtons.Children.OfType<Button>())
-            button.Style = (Style)FindResource((string)button.Tag == mode ? "PrimaryButton" : typeof(Button));
+        foreach (var item in LayoutMenu.Items.OfType<MenuItem>()) item.IsChecked = (string)item.Tag == mode;
+        ViewMenuButton.Content = "视图 · " + (mode == "edit" ? "仅编辑" : mode == "preview" ? "仅预览" : "分屏") + " ▾";
         if (mode != "edit") RenderPreview();
     }
-    private void Format_Click(object sender, RoutedEventArgs e) => InsertMarkdown((string)((Button)sender).Tag);
+    private void Format_Click(object sender, RoutedEventArgs e) => InsertMarkdown((string)((FrameworkElement)sender).Tag);
     private void InsertMarkdown(string kind)
     {
         if (busy || current?.State != "ACTIVE") return;
